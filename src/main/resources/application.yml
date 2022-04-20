@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/jpashop;
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create #해당하는 테이블이 있으면 DROP하고 새로 만들어준다. 로컬환경에서만 사용할 것.
+    properties:
+      hibernate:
+#        show_sql: true #system.out으로 출력함. 개발환경에서만 사용할 것.
+        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug #logger를 통해서 sql을 로깅함.
+    org.hibernate.type: trace  #jpa가 날리는 sql의 쿼리 파라미터를 알려주는 설정.
