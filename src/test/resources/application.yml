@@ -1,0 +1,29 @@
+spring:
+#  테스트에서 스프링을 실행하면 이 위치에 있는 설정 파일을 먼저 읽는다.
+# test - resources 에 yaml파일이 없을 때는 메인의 yaml을 읽는다.
+
+#  스프링 부트는 datasource 설정이 없으면, 기본적을 메모리 DB를 사용하고, driver-class도 현재 등록된
+#  라이브러를 보고 찾아준다. 추가로 ddl-auto 도 create-drop 모드로 동작한다. 따라서 데이터소스나,
+#  JPA 관련된 별도의 추가 설정을 하지 않아도 된다.
+
+# * ddl-auto  create : 내가 가진 엔티티를 모두 drop 하고 create 실행.
+#             create-drop 설정 : create + 마지막 애플리케이션 종료 시점에 table 모두 drop 시켜 메모리 정리해준다.
+
+#  datasource:
+#    url: jdbc:h2:mem:test
+#    username: sa
+#    password:
+#    driver-class-name: org.h2.Driver
+#
+#  jpa:
+#    hibernate:
+#      ddl-auto: create #해당하는 테이블이 있으면 DROP하고 새로 만들어준다. 로컬환경에서만 사용할 것.
+#    properties:
+#      hibernate:
+##        show_sql: true #system.out으로 출력함. 개발환경에서만 사용할 것.
+#        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug #logger를 통해서 sql을 로깅함.
+    org.hibernate.type: trace  #jpa가 날리는 sql의 쿼리 파라미터를 알려주는 설정.
