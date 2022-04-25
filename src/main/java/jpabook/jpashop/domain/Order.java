@@ -20,11 +20,23 @@ import static javax.persistence.FetchType.*;
 @Setter
 public class Order {
     //    모든 연관관계는 지연로딩으로 설정!
-    //    즉시로딩( EAGER )은 예측이 어렵고, 어떤 SQL이 실행될지 추적하기 어렵다. 특히 JPQL을 실행할 때 N+1
-    //    문제가 자주 발생한다.
+    //    즉시로딩( EAGER )은 예측이 어렵고, 어떤 SQL이 실행될지 추적하기 어렵다. 특히 JPQL을 실행할 때 N+1 문제가 자주 발생한다.
     //    JPQL : select o From order o; -> SQL : select * from order  ==> N+1문제 발생. order 가져오는 쿼리 + order에 엮인 member를 가져오기 위한 쿼리 n번
     //    연관된 엔티티를 함께 DB에서 조회해야 하면, fetch join또는 엔티티 그래프 기능을 사용한다.
     //    @XToOne(OneToOne, ManyToOne) 관계는 기본이 즉시로딩이므로 직접 지연로딩으로 설정해야 한다.
+
+    /*Cascade 옵션 : Entity의 상태 변화를 전이시키는 옵션. 주로 ALL옵션을 사용. ALL : 상위 엔터티에서 하위 엔터티로 모든 작업을 전파*/
+    // Cascade 옵션을 주면, 만약 orderItems에 A,B,C 컬렉션 3개를 담아놓고,
+    // order를 저장[persist(order)]하면 Entity 상태가 전파되어, orderItems도 같이 persist된다.
+
+    //CasCade 사용하지 않을 때 persist()코드 작성해야 할 순서:
+    //    persist(orderItemA)
+    //    persist(orderItemB)
+    //    persist(orderItemC)
+    //    persist(order)        //이렇게 따로따로 해줘야함.
+
+    //Cascade 권한 줬을 때:
+    //    persist(order)        //order만 persist상태로 바꾸면 orderItems 엔티티의 상태도 persist로 전파되어 A,B,C 모두 저장(persist상태로 변화)됨.
 
     @Id
     @GeneratedValue
@@ -54,6 +66,15 @@ public class Order {
         member.getOrders().add(this);
     }
 
+    /*    아래 코드를 메인 메서드에서 호출 하면서 적어줘야할 일을 연관관계 편입 메소드로 미리 원자적으로 묶어준다.*/
+//    public static void main(String[] args) {
+//        Member member = new Member();
+//        Order order = new Order();
+//
+//        member.getOrders().add(order);
+//        order.setMember(member);
+//    }
+
     public void addOrderItem(OrderItem orderItem) {
         orderItems.add(orderItem);
         orderItem.setOrder(this);
@@ -64,27 +85,56 @@ public class Order {
         delivery.setOrder(this);
     }
 
-    //아래 코드를 비즈니스 로직에서 적어줘야할 일을 연관관계 편입 메소드로 원자적으로 묶어준다.
-//    public static void main(String[] args) {
-//        Member member = new Member();
-//        Order order = new Order();
-//
-//        member.getOrders().add(order);
-//        order.setMember(member);
-//    }
+    /*모듈의 응집도를 높이기 위해서 바깥에서 호출하면서 해줘야할 비즈니스 로직을 엔티티 안에 한 덩어리로 묶어놓음*/
+    //==생성 메서드==//
+    public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems) { //...으로 파라미터 여러개 넘김 (가변인자)
+        Order order = new Order();  //오더 생성
+        //연관관계 매핑
+        order.setMember(member);
+        order.setDelivery(delivery);
+        for (OrderItem orderItem : orderItems) {
+            order.addOrderItem(orderItem);
+        }
+        order.setStatus(OrderStatus.ORDER); //처음 상태를 ORDER로 강제해놓음.
+        order.setOrderDate(LocalDateTime.now());
+        return order;
+    }
+
+    //==비즈니스 로직==//
+    /*
+     * 주문 취소
+     * */
+    public void cancel() {
+        if (delivery.getStatus() == DeliveryStatus.COMP) {
+            throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가능합니다.");
+        }
+
+        this.setStatus(OrderStatus.CANCEL); //취소 처리
+        for (OrderItem orderItem : orderItems) { //OrderItems의 재고를 원상 복구
+            orderItem.cancel();
+        }
+    }
+
+    //==조회 로직==//
+    /*
+    * 전체 주문 가격 조회
+    * */
+    public int getTotalPrice() {  //주문상품 엔티티의 가격을 모두 합한 가격 => 총 가격 구하기
+        int totalPrice = 0;
+        for (OrderItem orderItem : orderItems) {
+            totalPrice += orderItem.getTotalPrice();
+        }
+        return totalPrice;
+
+/* 위 코드를 자바8의 스트림으로 간단하게 표현하면 */
+//        return orderItems.stream()
+//        .mapToInt(OrderItem::getTotalPrice)
+//        .sum();
+    }
 
 
 
-    /*Cascade 옵션 : Entity의 상태 변화를 전이시키는 옵션. 주로 ALL옵션을 사용. ALL : 상위 엔터티에서 하위 엔터티로 모든 작업을 전파*/
-    // Cascade 옵션을 주면, 만약 orderItems에 A,B,C 컬렉션 3개를 담아놓고,
-    // order를 저장[persist(order)]하면 Entity 상태가 전파되어, orderItems도 같이 persist된다.
 
-    //CasCade 사용하지 않을 때 저장 순서:
-//    persist(orderItemA)
-//    persist(orderItemB)
-//    persist(orderItemC)
-//    persist(order)        //이렇게 따로따로 해줘야함.
 
-    //Cascade 권한 줬을 때:
-//    persist(order)        //order만 persist상태로 바꾸면 orderItems 엔티티의 상태도 persist로 전파되어 A,B,C 모두 저장(persist상태로 변화)됨.
+
 }

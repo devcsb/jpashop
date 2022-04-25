@@ -27,7 +27,7 @@ public class  Member {
     @OneToMany(mappedBy = "member") //order 엔티티의  member 필드가 매핑된 객체라고 알려줌. 읽기 전용 거울 객체가 된 것.
     private List<Order> orders = new ArrayList<>();  //컬렉션은 필드에서 바로 초기화 하는 것이 null 문제나 하이버네이트 매커니즘 문제에서 안전하며 간결하다.
 
-//    public Member() {
+//    public Member() {  //이렇게 하는 것 보다 필드에서 바로 초기화할 것.
 //        orders = new ArrayList<>();
 //    }
 }
