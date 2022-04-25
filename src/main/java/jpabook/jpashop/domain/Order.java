@@ -1,6 +1,8 @@
 package jpabook.jpashop.domain;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -18,6 +20,7 @@ import static javax.persistence.FetchType.*;
 @Table(name = "orders") // 관례를 벗어나는 테이블명을 사용하므로 수동으로 명시해줌. // 명시 없을 시, order를 찾음.
 @Getter
 @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
     //    모든 연관관계는 지연로딩으로 설정!
     //    즉시로딩( EAGER )은 예측이 어렵고, 어떤 SQL이 실행될지 추적하기 어렵다. 특히 JPQL을 실행할 때 N+1 문제가 자주 발생한다.
@@ -26,6 +29,9 @@ public class Order {
     //    @XToOne(OneToOne, ManyToOne) 관계는 기본이 즉시로딩이므로 직접 지연로딩으로 설정해야 한다.
 
     /*Cascade 옵션 : Entity의 상태 변화를 전이시키는 옵션. 주로 ALL옵션을 사용. ALL : 상위 엔터티에서 하위 엔터티로 모든 작업을 전파*/
+    /*Cascade의 범위에 대한 고민 => 참조하는 주인이 private Owner일 경우에만 사용하자.
+     ex) Order는 OrderItem과 Delivery를 관리한다. OrderItem은 Order만 참조하고, Delivery도 Order만 참조한다. 다른 복잡한 관계가 얽혀있지 않으므로.
+     복잡하계 여기 저기서 참조하는 엔티티의 경우, 각각 따로 persist 해야한다.*/
     // Cascade 옵션을 주면, 만약 orderItems에 A,B,C 컬렉션 3개를 담아놓고,
     // order를 저장[persist(order)]하면 Entity 상태가 전파되어, orderItems도 같이 persist된다.
 
@@ -104,7 +110,7 @@ public class Order {
     /*
      * 주문 취소
      * */
-    public void cancel() {
+    public void cancel() { //cancel()호출시 JPA가 dirty checking해서 Order.OrderStatus, OrderItem.stockQuantity에 대한 업데이트 쿼리가 날아간다.
         if (delivery.getStatus() == DeliveryStatus.COMP) {
             throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가능합니다.");
         }
@@ -117,8 +123,8 @@ public class Order {
 
     //==조회 로직==//
     /*
-    * 전체 주문 가격 조회
-    * */
+     * 전체 주문 가격 조회
+     * */
     public int getTotalPrice() {  //주문상품 엔티티의 가격을 모두 합한 가격 => 총 가격 구하기
         int totalPrice = 0;
         for (OrderItem orderItem : orderItems) {
@@ -126,15 +132,11 @@ public class Order {
         }
         return totalPrice;
 
-/* 위 코드를 자바8의 스트림으로 간단하게 표현하면 */
+        /* 위 코드를 자바8의 스트림으로 간단하게 표현하면 */
 //        return orderItems.stream()
 //        .mapToInt(OrderItem::getTotalPrice)
 //        .sum();
     }
-
-
-
-
 
 
 }
