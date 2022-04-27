@@ -71,19 +71,27 @@ public class ItemController {
 //    ② 생성된 오브젝트에(info) HTTP로 넘어 온 값들을 자동으로 바인딩한다.
 //    ③ @ModelAttribute 어노테이션이 붙은 객체가 자동으로 Model 객체에 추가된다.
     @PostMapping("items/{itemId}/edit")
-    public String updateItem(@PathVariable String itemId, @ModelAttribute("form") BookForm form) {
+    public String updateItem(@PathVariable Long itemId, @ModelAttribute("form") BookForm form) {
         //한 번에 setter 작성하는 법: DTO나 Form에서 필드값을 모두 가져온다. ctrl 두번+ 방향키로 커서 복사하는 법 이용.
         //빈 공간에 복사 후 커서 복사하여 shift + Tap으로 공백 제거 후 다시 복사, 대문자 변환 단축키 활용하여 작성( ctrl + shift + U)
         /*form에서 itemid를 조작할 수 있으므로 권한 체크하는 로직이 있어야한다.*/
-        Book book = new Book();
-        book.setId(form.getId());
-        book.setName(form.getName());
-        book.setPrice(form.getPrice());
-        book.setStockQuantity(form.getStockQuantity());
-        book.setAuthor(form.getAuthor());
-        book.setIsbn(form.getIsbn());
 
-        itemService.saveItem(book);
+        /*준영속 상태의 객체*/
+        /*book의 모든 필드를 다 주입하지 않은 채로 영속성컨텍스트에 merge()하면, 해당 필드는 DB에 null값으로 들어가므로. merge는 웬만해선 사용하지 말자*/
+//      Book 객체는 이미 DB에 한번 저장되어서 식별자가 존재한다.
+//      이렇게 임의로 만들어낸 엔티티도 기존 식별자를 가지고 있으면 준영속 엔티티로 볼 수 있다.
+//        Book book = new Book();  //new로 새로 객체를 만들었지만, setId로 기존 엔티티의 식별자를 넣었으므로 준영속
+//        book.setId(form.getId());
+//        book.setName(form.getName());
+//        book.setPrice(form.getPrice());
+//        book.setStockQuantity(form.getStockQuantity());
+//        book.setAuthor(form.getAuthor());
+//        book.setIsbn(form.getIsbn());
+//        itemService.saveItem(book);
+
+        /*위 코드처럼 컨트롤러에서 어설프게 엔티티를 생성하지 말자.*/
+        itemService.updateItem(itemId, form.getName(), form.getPrice(), form.getStockQuantity());  //이렇게 하거나, 데이터가 많으면, DTO를 만들어서 전달
+
         return "redirect:/items";
 
     }
