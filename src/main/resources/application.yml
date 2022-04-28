@@ -7,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create #해당하는 테이블이 있으면 DROP하고 새로 만들어준다. 로컬환경에서만 사용할 것.
+      ddl-auto: none # create : 해당하는 테이블이 있으면 DROP하고 새로 만들어준다. 로컬환경에서만 사용할 것.
     properties:
       hibernate:
 #        show_sql: true #system.out으로 출력함. 개발환경에서만 사용할 것.
