@@ -59,4 +59,14 @@ public class MemberService {
         return memberRepository.findOne(memberId);
     }
 
+    /*회원수정 api -6분부터 흐름 jpa 처리 흐름 참고*/
+    @Transactional //트랜잭션 시작
+    public void update(Long id, String name) { /* 만약, public member update() 이런식으로 변경한 member를 반환하게 되면, CQS 원칙을 위배하게 된다. */
+        Member member = memberRepository.findOne(id); //영속성 컨텍스트에서 findOne해서 찾음 -> 찾은게 없으므로 DB에서 가져와서 영속성 컨텍스트에 올리고, member변수에 반환. 현재 member는 영속상태
+        member.setName(name); //영속상태의 member의 속성값 변경.
+    }//트랜잭션 종료되고 commit되기 직전 시점에 jpa가 flush()를 하고, DB commit이 일어난다.
+
+    /*flush의 동작과정
+    * - 변경 감지(dirty checking -> 수정된 Entity를 쓰기 지연 SQL 저장소에 등록 -> 지연 저장소의 Query를 DB에 전송
+    * */
 }
