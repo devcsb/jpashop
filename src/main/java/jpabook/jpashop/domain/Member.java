@@ -1,13 +1,10 @@
 package jpabook.jpashop.domain;
 
-
-
-
-
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +16,8 @@ public class  Member {
     @Column(name = "member_id") // 컬럼명 따로 지정. 엔티티의 식별자는 id 를 사용하고 PK 컬럼명은 member_id 사용하기 위함.
     private Long id;  // em.persist(member) => 영속성 컨텍스트에 member객체의 @Id 값이 key 로, member 엔티티가 value 형태로 저장됨. db에 들어간 시점이 아니어도 id필드에 값을 채워줌.
 
+    /* @NotEmpty를 사용함으로써, 프레젠테이션 계층에 필요한 검증 로직이 지금 엔티티에 들어가있음.*/
+//    @NotEmpty // javax.validation의 @Valid를 붙여서 사용할 때, @NotEmpty 가 붙은 필드는 필수값으로 검증해준다.
     private String name;
 
     @Embedded // JPA의 내장타입인 임베디드 타입임을 알려줌. / @Embedded: 값 타입을 사용하는 곳에 표시
