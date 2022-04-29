@@ -24,7 +24,7 @@ public class  Member {
     @Embedded // JPA의 내장타입인 임베디드 타입임을 알려줌. / @Embedded: 값 타입을 사용하는 곳에 표시
     private Address address;
 
-//    @JsonIgnore  //필드 속성을 무시하는 Jacson의 어노테이션
+    @JsonIgnore  //필드 속성을 무시하는 Jacson의 어노테이션
     @OneToMany(mappedBy = "member") //order 엔티티의  member 필드가 매핑된 객체라고 알려줌. 읽기 전용 거울 객체가 된 것.
     private List<Order> orders = new ArrayList<>();  //컬렉션은 필드에서 바로 초기화 하는 것이 null 문제나 하이버네이트 매커니즘 문제에서 안전하며 간결하다.
 

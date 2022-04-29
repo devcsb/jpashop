@@ -26,8 +26,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-devtools'
+/*추가할 때 버전을 생략하면 스프링부트가 알아서 최적화된 버전을 가져온다. 안되면 강제로 추가하면 됨.*/
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.0' //쿼리 파라미터 로그 남기기 위한 외부 라이브러리
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-validation' //@Valid
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5' // Hibernate5Module
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'

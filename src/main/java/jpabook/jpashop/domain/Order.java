@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -52,6 +53,10 @@ public class Order {
     @ManyToOne(fetch = LAZY) // member에 대한 * : 1 연관관계 설정  // 기본 패치전략 : EAGER
     @JoinColumn(name = "member_id") // 매핑할 컬럼을 설정. foreign key를 적어준다.
     private Member member;
+    /*LAZY Loading이므로 하이버네이트가 아래 코드처럼 멤버를 상속받은 프록시 멤버를 넣어놓고, 필요할 때. sql을 날려서 member 객체에 값을 채워준다.*/
+    // private Member member = new ByteBuddyInterceptor();
+    //실제 엔티티 대신에 프록시 존재
+    //jackson 라이브러리는 기본적으로 이 프록시 객체를 json으로 어떻게 생성해야 하는지 모름 예외 발생
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL) // @XToMany는 기본 패치전략이 Lazy로딩이므로 그대로 둬도 된다.
     private List<OrderItem> orderItems = new ArrayList<>();

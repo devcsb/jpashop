@@ -1,5 +1,6 @@
 package jpabook.jpashop.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +15,7 @@ public class Delivery {
     @Column(name = "delivery_id")
     private Long id;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "delivery") //OneToOne 관계에서는 FK를 어디에 두어도 상관없으나, 엑세스를 많이 하는 쪽에 FK를 두는 편이 좋다.
     private Order order;
 
