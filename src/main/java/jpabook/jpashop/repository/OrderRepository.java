@@ -31,8 +31,8 @@ public class OrderRepository {
         //jpql 작성하는 createQuery() 의 매개변수 : String qlString, Class<Object> resultClass
         /*모든 검색 옵션값이 있을 때의 쿼리*/
         return em.createQuery("select o from Order o join o.member m" +
-                " where o.status = :status" +  //+로 문자열 합치므로, 맨 앞에 한 칸 띄어쓰기 해줌.
-                " and m.name like :name", Order.class)
+                        " where o.status = :status" +  //+로 문자열 합치므로, 맨 앞에 한 칸 띄어쓰기 해줌.
+                        " and m.name like :name", Order.class)
                 .setParameter("status", orderSearch.getOrderStatus())  //파라미터 바인딩
                 .setParameter("name", orderSearch.getMemberName())
 //                .setFirstResult(100)  // 100번째부터 가져온다. (페이징 시 사용)
@@ -87,8 +87,8 @@ public class OrderRepository {
     }
 
     /*
-    * JPA Criteria를 이용한 동적쿼리 사용법
-    * */
+     * JPA Criteria를 이용한 동적쿼리 사용법
+     * */
     public List<Order> findAllByCriteria(OrderSearch orderSearch) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Order> cq = cb.createQuery(Order.class);
@@ -113,4 +113,13 @@ public class OrderRepository {
         return query.getResultList();
     }
 
+
+    public List<Order> findAllWithMemberDelivery() {
+        return em.createQuery(  //order, member, delivery를 한번에 다 가져옴. fetch는 JPA의 문법.
+                "select o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d", Order.class
+        ).getResultList();
+
+    }
 }
