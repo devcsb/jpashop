@@ -16,4 +16,4 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug #logger를 통해서 sql을 로깅함.
-    org.hibernate.type: trace  #jpa가 날리는 sql의 쿼리 파라미터를 알려주는 설정.
+#    org.hibernate.type: trace  #jpa가 날리는 sql의 쿼리 파라미터를 알려주는 설정.

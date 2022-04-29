@@ -1,20 +1,25 @@
 package jpabook.jpashop.api;
 
+import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Order;
+import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * xToOne
  * Order
  * Order -> member
  * Order -> delivery
- * */
+ */
 @RestController
 @RequiredArgsConstructor
 public class OrderSimpleApiController {
@@ -36,5 +41,43 @@ public class OrderSimpleApiController {
         return all;  /* 위의 Lazy 강제 초기화 없이 그냥 Entity 그대로 반환하면, Order 와 Member 사이에서 무한루프가 돈다. 이를 막으려면 양방향이 걸린 모든 속성에 @JsonIgnore를 걸어준다*/
     }
 
+    /**
+     * V2. 엔티티를 조회해서 DTO로 변환(fetch join 사용X)
+     * - 단점: 지연로딩으로 쿼리 N번 호출
+     * 쿼리가 총 1 + N + N번 실행된다. (v1과 쿼리수 결과는 같다.)
+     * order 조회 1번(order 조회 결과 수가 N이 된다.)
+     * order -> member 지연 로딩 조회 N 번
+     * order -> delivery 지연 로딩 조회 N 번
+     */
+    @GetMapping("/api/v2/simple-orders")
+    public List<SimpleOrderDto> ordersV2() { // List로 반환하지 말고 Result 객체를 생성하여 한 번 감싸서 반환할 것. 예제라서 생략.
+        //ORDER 2개 // N+1 문제 발생! => ORDER 조회 1 + 회원 N(ORDER 개수가 2개이므로 N =2) + 배송 N
+        /*EAGER로 해결이 안되는 이유 : 일단 처음 ORDER를 들고옴 -> 까보니 연관관계에 EAGER가 있음을 발견 -> 한 번에 들고 오려고 수많은 쿼리가 날아감*/
+        List<Order> orders = orderRepository.findAllByString(new OrderSearch()); //List 그대로 반환 말고 Dto로 바꿈.
+
+        List<SimpleOrderDto> result = orders.stream() //orders를 stream으로 돌리면서 map으로 order를 SimpleOrderDto로 변환하고, collect()로 다시 List로 변환해서 반환.
+                .map(o -> new SimpleOrderDto(o))  //.map(SimpleOrderDto::new) 이런식으로 람다 레퍼런스 이용한 축약 가능
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
+    @Data
+    static class SimpleOrderDto {
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+
+        //Dto가 Entity를 파라미터로 받는 것은 큰 문제가 되지 않는다. 중요하지 않은 곳에서 중요한 Entity를 의존하는 것이기 때문.
+        public SimpleOrderDto(Order order) {
+            orderId = order.getId();
+            name = order.getMember().getName();  //LAZY 초기화 : 영속성 컨텍스트에 올라온 해당 객체(Member)를 명시해준 매핑컬럼(member_id)를 이용해서 찾아보고, 없으면 DB에서 가져온다.
+            orderDate = order.getOrderDate();
+            orderStatus = order.getStatus();
+            address = order.getDelivery().getAddress();  //LAZY 초기화
+        }
+    }
 
 }

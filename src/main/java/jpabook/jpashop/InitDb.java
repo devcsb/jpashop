@@ -64,6 +64,7 @@ public class InitDb {
             return delivery;
         }
 
+
         public void dbInit2() {
             Member member = createMember("userB", "부산", "달맞이로 1번길", "72085");
             em.persist(member);
