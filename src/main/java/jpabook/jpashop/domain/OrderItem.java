@@ -6,11 +6,13 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import javax.persistence.*;
 
 import static javax.persistence.FetchType.*;
 
+//@BatchSize(size = 100)  // 컬렉션이 아닌 ToOne 관계일 때는 엔티티 클래스에 적용
 @Entity
 @Getter @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // Lombok의 기능. 기본 생성자의 접근제한자를 protected로 설정한다.

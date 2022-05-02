@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor;
 
 import javax.persistence.*;
@@ -58,6 +59,7 @@ public class Order {
     //실제 엔티티 대신에 프록시 존재
     //jackson 라이브러리는 기본적으로 이 프록시 객체를 json으로 어떻게 생성해야 하는지 모름 예외 발생
 
+//    @BatchSize(size = 1000)  //필드 별로 배치 사이즈 설정
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL) // @XToMany는 기본 패치전략이 Lazy로딩이므로 그대로 둬도 된다.
     private List<OrderItem> orderItems = new ArrayList<>();
 
