@@ -42,12 +42,12 @@ public class OrderApiController {
     }
 
     /*
-    *  V2. 엔티티를 조회해서 DTO로 변환(fetch join 사용X)
-    * - 트랜잭션 안에서 지연 로딩 필요
-    * */
+     *  V2. 엔티티를 조회해서 DTO로 변환(fetch join 사용X)
+     * - 트랜잭션 안에서 지연 로딩 필요
+     * */
     //엔티티를 외부에 노출시키지 말라는 뜻은, 단순히 Dto로 감싸는 걸로 끝내라는 말이 아니라, 의존관계에 엮인 모든 Entity를 Dto로 전부 바꿔서 써야한다는 뜻이다.
     @GetMapping("/api/v2/orders")
-    public List<OrderDto> ordersV2() {
+    public List<OrderDto> ordersV2() { // N+1
         List<Order> orders = orderRepository.findAllByString(new OrderSearch()); //Entity에서 orders 조회 (Entity 타입)
         List<OrderDto> result = orders.stream()  //Entity에서 Dto로 변환
                 .map(OrderDto::new)
@@ -55,6 +55,22 @@ public class OrderApiController {
 
         return result;
     }
+
+    /*
+     *  V3. 엔티티를 조회해서 DTO로 변환(fetch join 사용O)
+     * - 페이징 시에는 N 부분을 포기해야함(대신에 batch fetch size? 옵션 주면 N -> 1 쿼리로 변경 가능)
+     * */
+    @GetMapping("/api/v3/orders")
+    public List<OrderDto> ordersV3() { //쿼리가 1번 나감.
+        List<Order> orders = orderRepository.findAllWithItem();
+
+        List<OrderDto> result = orders.stream()
+                .map(OrderDto::new)
+                .collect(Collectors.toList());
+
+        return result;
+    }
+
 
     //    No serializer found for class jpabook.jpashop.api.OrderApiController$OrderDto and no properties discovered to create BeanSerializer
     //    오류 중 no properties는 대부분 getter setter 가 없어서 발생.
@@ -66,7 +82,7 @@ public class OrderApiController {
         private LocalDateTime orderDate;
         private OrderStatus orderStatus;
         private Address address;
-//        private List<OrderItem> orderItems; //지금은 OrderItem의 Entity를 반환하고 있다. 하지만 OrderItem 도 Dto로 다 바꿔야한다.
+        //        private List<OrderItem> orderItems; //지금은 OrderItem의 Entity를 반환하고 있다. 하지만 OrderItem 도 Dto로 다 바꿔야한다.
         private List<OrderItemDto> orderItems; //Dto형태로 받음.
 
         public OrderDto(Order order) {

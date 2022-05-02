@@ -120,6 +120,30 @@ public class OrderRepository {
                         " join fetch o.member m" +
                         " join fetch o.delivery d", Order.class
         ).getResultList();
+    }
 
+    /*
+     * JPA의 distinct는 SQL에 distinct를 추가하고, 더해서 같은 엔티티가
+     * 조회되면, 애플리케이션에서 중복을 걸러준다. 이 예에서 order가 컬렉션 페치 조인 때문에 중복 조회 되는
+     * 것을 막아준다.
+     * db의 distinct는 모든 값이 같아야 중복제거 되지만, JPA의 distinct는 Root Entity가 중복인 경우 그걸 애플리케이션단에서 다시 걸러준다.
+     *
+     *  xToMany 관계에서 fetch join(collection fetch join)을 하면 절대 안된다!
+     *  일대다 join을 한 순간, 데이터 row가 多쪽을 기준으로 뻥튀기 되면서 페이징이 기준이 완전히 틀어지므로 DB에서 페이징을 할 수 없음.
+     *  결국 하이버네이트는 경고 로그를 남기면서 모든 데이터를 DB에서 읽어오고, 메모리에서 페이징 해버린다(매우 위험하다)
+     *
+     * 컬렉션 페치 조인은 1개만 사용할 수 있다. 컬렉션 둘 이상에 fetch join을 사용하면 안된다. ex) 1 : N : M 관계에서 불가능
+     * */
+    public List<Order> findAllWithItem() {
+        // select distinct o from Order o => Order의 id값이 같으면, 그중 하나만 남겨서 반환해줌.(중복제거)
+        return em.createQuery(
+                        "select distinct o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d" +
+                                " join fetch o.orderItems oi" +
+                                " join fetch oi.item i", Order.class)
+//                .setFirstResult(1)
+//                .setMaxResults(100)
+                .getResultList();
     }
 }
