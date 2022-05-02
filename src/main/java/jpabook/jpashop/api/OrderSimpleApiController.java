@@ -83,7 +83,11 @@ public class OrderSimpleApiController {
 
     //repository는 가급적 순수한 Entity를 조회하는데 쓰기 위해, v4버전처럼 화면에 종속적으로 Dto로 바로 뽑아내는 방식은,
     // 따로 QueryRepository 등으로 별도로 분리해서 관리하는 편이 유지보수 측면에서 좋다.
-
+    /**
+     * V4. JPA에서 DTO로 바로 조회
+     * - 쿼리 1번 호출
+     * - select 절에서 원하는 데이터만 선택해서 조회
+     */
     @GetMapping("/api/v4/simple-orders")
     public List<OrderSimpleQueryDto> ordersV4() {
         return orderSimpleQueryRepository.findOrderDtos();
