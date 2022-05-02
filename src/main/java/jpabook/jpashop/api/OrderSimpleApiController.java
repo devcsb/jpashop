@@ -32,8 +32,9 @@ public class OrderSimpleApiController {
 
     /**
      * V1. 엔티티 직접 노출
-     * - Hibernate5Module 모듈 등록, LAZY=null 처리
-     * - 양방향 관계 문제 발생 -> @JsonIgnore
+     * - 엔티티가 변하면 API 스펙이 변한다.
+     * - 트랜잭션 안에서 지연 로딩 필요
+     * - 양방향 연관관계 문제
      */
     @GetMapping("/api/v1/simple-orders")
     public List<Order> ordersV1() { //연관된 관계가 얽혀있을 때, Entity를 직접 호출하면 무슨 일이 발생하는지 보여주기 위함.
@@ -83,6 +84,7 @@ public class OrderSimpleApiController {
 
     //repository는 가급적 순수한 Entity를 조회하는데 쓰기 위해, v4버전처럼 화면에 종속적으로 Dto로 바로 뽑아내는 방식은,
     // 따로 QueryRepository 등으로 별도로 분리해서 관리하는 편이 유지보수 측면에서 좋다.
+
     /**
      * V4. JPA에서 DTO로 바로 조회
      * - 쿼리 1번 호출

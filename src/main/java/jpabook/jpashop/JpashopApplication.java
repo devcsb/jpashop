@@ -13,10 +13,10 @@ public class JpashopApplication {
 		SpringApplication.run(JpashopApplication.class, args);
 	}
 
-//	기본적으로 초기화 된 프록시 객체만 노출, 초기화 되지 않은 프록시 객체는 노출 안함
+//	기본적으로 초기화 된 프록시 객체만 노출, 초기화 되지 않은 프록시 객체는 노출 안함. Lazy Loading을 호출해서 정상적으로 데이터가 로딩된 객체만 api로 반환.
 	@Bean
 	Hibernate5Module hibernate5Module() {
-		Hibernate5Module hibernate5Module = new Hibernate5Module();
+		Hibernate5Module hibernate5Module = new Hibernate5Module(); //기본값
 //강제 지연 로딩 설정
 //		hibernate5Module.configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING, true);  //이렇게 하면 모든 entity 정보를 들고옴
 		return hibernate5Module;
