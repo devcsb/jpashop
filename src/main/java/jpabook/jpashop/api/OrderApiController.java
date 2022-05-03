@@ -6,6 +6,8 @@ import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.query.OrderFlatDto;
+import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,14 +52,14 @@ public class OrderApiController {
     /*
      *  V2. 엔티티를 조회해서 DTO로 변환(fetch join 사용X)
      * - 트랜잭션 안에서 지연 로딩 필요
-     * */
+     */
     //엔티티를 외부에 노출시키지 말라는 뜻은, 단순히 Dto로 감싸는 걸로 끝내라는 말이 아니라, 의존관계에 엮인 모든 Entity를 Dto로 전부 바꿔서 써야한다는 뜻이다.
     @GetMapping("/api/v2/orders")
     public List<OrderDto> ordersV2() { // N+1
         List<Order> orders = orderRepository.findAllByString(new OrderSearch()); //Entity에서 orders 조회 (Entity 타입)
         List<OrderDto> result = orders.stream()  //Entity에서 Dto로 변환
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         return result;
     }
@@ -63,14 +67,14 @@ public class OrderApiController {
     /*
      *  V3. 엔티티를 조회해서 DTO로 변환(fetch join 사용O)
      * - 페이징 시에는 N 부분을 포기해야함(대신에 batch fetch size? 옵션 주면 N -> 1 쿼리로 변경 가능)
-     * */
+     */
     @GetMapping("/api/v3/orders")
     public List<OrderDto> ordersV3() { //쿼리가 1번 나감.
         List<Order> orders = orderRepository.findAllWithItem();
 
         List<OrderDto> result = orders.stream()
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         return result;
     }
@@ -89,7 +93,7 @@ public class OrderApiController {
 
         List<OrderDto> result = orders.stream()
                 .map(OrderDto::new)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         return result;
     }
@@ -97,7 +101,7 @@ public class OrderApiController {
     /*
      *  V4. JPA에서 DTO로 바로 조회, 컬렉션 N 조회 (1 + N Query)
      * - 페이징 가능
-     * */
+     */
     @GetMapping("/api/v4/orders")
     public List<OrderQueryDto> ordersV4() {
         return orderQueryRepository.findOrderQueryDtos();
@@ -112,6 +116,28 @@ public class OrderApiController {
     public List<OrderQueryDto> ordersV5() {
         return orderQueryRepository.findAllbyDto_optimization();
 
+    }
+
+    /*
+     * V6. JPA에서 DTO로 바로 조회, 플랫 데이터(1Query) (1 Query)
+     * - 페이징 불가능! (데이터 row가 多쪽으로 뻥튀기 되므로)
+     *쿼리는 한번이지만 조인으로 인해 DB에서 애플리케이션에 전달하는 데이터에 중복 데이터가 추가되므로 상황에 따라(가져오는 양이 클 때) V5 보다 더 느릴 수 도 있다.
+     **/
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDto> ordersV6() {
+        List<OrderFlatDto> flats = orderQueryRepository.findAllbyDto_flat();// 데이터 중복이 발생! 수작업으로 중복제거 해야함.
+
+        //OrderFlatDto를 OrderQueryDto 형태로 loop 돌면서 직접 변환
+        return flats.stream()
+                .collect(groupingBy(o -> new OrderQueryDto(o.getOrderId(),  //Dto에서 EqualsAndHashCode 기준 설정
+                                o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDto(o.getOrderId(),
+                                o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDto(e.getKey().getOrderId(),
+                        e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),
+                        e.getKey().getAddress(), e.getValue())) //e.getValue()로 위에서 만든 컬렉션(OrderQueryItemDto)를 가져옴
+                .collect(toList());
     }
 
 
@@ -136,7 +162,7 @@ public class OrderApiController {
             address = order.getDelivery().getAddress();
             orderItems = order.getOrderItems().stream()
                     .map(orderItem -> new OrderItemDto(orderItem))
-                    .collect(Collectors.toList());  //OrderItem을 Dto로 변환
+                    .collect(toList());  //OrderItem을 Dto로 변환
         }
     }
 

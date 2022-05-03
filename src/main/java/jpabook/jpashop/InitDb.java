@@ -46,7 +46,7 @@ public class InitDb {
             Book book1 = createBook("JPA1 BOOK", 10000, 100);
             em.persist(book1);
 
-            Book book2 = createBook("JPA1 BOOK", 20000, 100);
+            Book book2 = createBook("JPA2 BOOK", 20000, 100);
             em.persist(book2);
 
             OrderItem orderItem1 = OrderItem.createOrderItem(book1, 10000, 1);
@@ -69,7 +69,7 @@ public class InitDb {
             Member member = createMember("userB", "부산", "달맞이로 1번길", "72085");
             em.persist(member);
 
-            Book book1 = createBook("SPRING2 BOOK", 20000, 200);
+            Book book1 = createBook("SPRING1 BOOK", 20000, 200);
             em.persist(book1);
 
             Book book2 = createBook("SPRING2 BOOK", 40000, 300);
