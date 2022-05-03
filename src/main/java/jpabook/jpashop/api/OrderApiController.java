@@ -10,6 +10,7 @@ import jpabook.jpashop.repository.order.query.OrderFlatDto;
 import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
+import jpabook.jpashop.service.query.OrderQueryService;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -39,7 +39,7 @@ public class OrderApiController {
     public List<Order> ordersV1() {
         List<Order> all = orderRepository.findAllByString(new OrderSearch());
         for (Order order : all) {
-            order.getMember().getName();
+            order.getMember().getName();   //OSIV를 끄면, 여기서 에러 터짐. getMember()의 값이 프록시인데 초기화를 못해서 에러 발생. 영속성 컨텍스트가 없으므로.
             order.getDelivery().getAddress();
 
             List<OrderItem> orderItems = order.getOrderItems(); //OrderItem 초기화
@@ -138,6 +138,17 @@ public class OrderApiController {
                         e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),
                         e.getKey().getAddress(), e.getValue())) //e.getValue()로 위에서 만든 컬렉션(OrderQueryItemDto)를 가져옴
                 .collect(toList());
+    }
+
+
+    private final OrderQueryService orderQueryService;
+
+    /*
+     * OSIV OFF 일 때, Command와 Query를 분리하는 방식의 예.
+     * */
+    @GetMapping("/api/osiv-off/orders")
+    public List<jpabook.jpashop.service.query.OrderDto> ordersV2OsivOff() { //쿼리가 1번 나감.
+        return orderQueryService.ordersV2OsivOff();
     }
 
 
