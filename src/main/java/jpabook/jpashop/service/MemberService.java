@@ -2,7 +2,6 @@ package jpabook.jpashop.service;
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; //@Transaction는 spring이 제공하는 것을 쓸 것.
 import java.util.List;
@@ -56,13 +55,13 @@ public class MemberService {
     * 회원 단 건 조회
     * */
     public Member findOne(Long memberId) {
-        return memberRepository.findOne(memberId);
+        return memberRepository.findById(memberId).get(); //findOne -> findById로 바뀜. Optional로 반환하므로 기존코드에 .get()추가
     }
 
     /*회원수정 api -6분부터 흐름 jpa 처리 흐름 참고*/
     @Transactional //트랜잭션 시작
     public void update(Long id, String name) { /* 만약, public member update() 이런식으로 변경한 member를 반환하게 되면, CQS 원칙을 위배하게 된다. */
-        Member member = memberRepository.findOne(id); //영속성 컨텍스트에서 findOne해서 찾음 -> 찾은게 없으므로 DB에서 가져와서 영속성 컨텍스트에 올리고, member변수에 반환. 현재 member는 영속상태
+        Member member = memberRepository.findById(id).get(); //영속성 컨텍스트에서 findOne해서 찾음 -> 찾은게 없으므로 DB에서 가져와서 영속성 컨텍스트에 올리고, member변수에 반환. 현재 member는 영속상태
         member.setName(name); //영속상태의 member의 속성값 변경.
     }//트랜잭션 종료되고 commit되기 직전 시점에 jpa가 flush()를 하고, DB commit이 일어난다.
 
