@@ -1,8 +1,19 @@
+// 1. queryDsl version 정보 추가
+buildscript {
+	dependencies {
+		classpath("gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:1.0.10")
+	}
+}
+
 plugins {
 	id 'org.springframework.boot' version '2.6.6'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
 }
+
+apply plugin: 'io.spring.dependency-management'
+// 2. querydsl plugins 추가
+apply plugin: "com.ewerk.gradle.plugins.querydsl"
 
 group = 'jpabook'
 version = '0.0.1-SNAPSHOT'
@@ -26,19 +37,59 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-devtools'
-/*추가할 때 버전을 생략하면 스프링부트가 알아서 최적화된 버전을 가져온다. 안되면 강제로 추가하면 됨.*/
-	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.0' //쿼리 파라미터 로그 남기기 위한 외부 라이브러리
-	implementation 'org.springframework.boot:spring-boot-starter-validation' //@Valid
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5' // Hibernate5Module
+	/*추가할 때 버전을 생략하면 스프링부트가 알아서 최적화된 버전을 가져온다. 안되면 강제로 추가하면 됨.*/
+	implementation 'org.springframework.boot:spring-boot-starter-validation' //쿼리 파라미터 로그 남기기 위한 외부 라이브러리
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.8.0'	//@Valid
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5'// Hibernate5Module
+	implementation 'org.jetbrains:annotations:20.1.0'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
+
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	//JUnit4 추가
 	testImplementation("org.junit.vintage:junit-vintage-engine") {
 		exclude group: "org.hamcrest", module: "hamcrest-core"
 	}
+
+	// 3. querydsl dependencies 추가
+	implementation 'com.querydsl:querydsl-jpa'
+	implementation 'com.querydsl:querydsl-apt'
+
+	// test시에도 query dsl 모델을 사용하기 위해서는 해당 옵션을 추가 해줘야 한다.
+	testCompileOnly("org.projectlombok:lombok")
+	testAnnotationProcessor("org.projectlombok:lombok")
 }
 
+// querydsl에서 사용할 경로 설정
+//def querydslDir = 'src/main/generated'
+def querydslDir = "$buildDir/generated/querydsl" //소스파일 저장위치 설정
+
+querydsl {
+	library = "com.querydsl:querydsl-apt"
+	jpa = true //jpa 사용시 true
+	querydslSourcesDir = querydslDir
+}
+
+// build 시 사용할 sourceSet 추가
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/java', querydslDir]
+		}
+	}
+}
+
+compileQuerydsl{
+	options.annotationProcessorPath = configurations.querydsl
+}
+// querydsl 컴파일시 사용할 옵션 설정
+configurations {
+	querydsl.extendsFrom compileClasspath
+}
+
+//JUnit Platform 사용 설정
 tasks.named('test') {
 	useJUnitPlatform()
 }

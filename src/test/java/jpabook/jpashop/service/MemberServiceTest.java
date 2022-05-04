@@ -37,7 +37,7 @@ class MemberServiceTest {
 
         //then
         em.flush(); // 쓰기 지연 sql저장소의 쿼리를 db에 수동 flush
-        assertEquals(member, memberRepository.findOne(saveId));
+        assertEquals(member, memberRepository.findById(saveId).get());
         //JPA에서 같은 트랜잭션 안에서 id값(pk값)이 같은 엔티티는 영속성 컨텍스트에서 똑같은 값을 가지므로.
 
     }

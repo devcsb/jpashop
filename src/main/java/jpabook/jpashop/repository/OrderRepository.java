@@ -1,7 +1,9 @@
 package jpabook.jpashop.repository;
 
-import jpabook.jpashop.domain.Member;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jpabook.jpashop.domain.Order;
+import jpabook.jpashop.domain.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -12,11 +14,21 @@ import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jpabook.jpashop.domain.QMember.member;
+import static jpabook.jpashop.domain.QOrder.order;
+
+
 @Repository
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class OrderRepository {
 
     private final EntityManager em;
+    private final JPAQueryFactory query;
+
+    public OrderRepository(EntityManager em) {
+        this.em = em;
+        this.query = new JPAQueryFactory(em);
+    }
 
     public void save(Order order) {
         em.persist(order);
@@ -26,7 +38,8 @@ public class OrderRepository {
         return em.find(Order.class, id);
     }
 
-    public List<Order> findAll(OrderSearch orderSearch) {
+    //동적쿼리의 필요성을 나타낸 예시 코드
+    public List<Order> findAllExample(OrderSearch orderSearch) {
 
         //jpql 작성하는 createQuery() 의 매개변수 : String qlString, Class<Object> resultClass
         /*모든 검색 옵션값이 있을 때의 쿼리*/
@@ -39,7 +52,7 @@ public class OrderRepository {
                 .setMaxResults(1000)  // 최대 1000건을 가져온다.
                 .getResultList();
 
-        /*아무 검색옵션 값이 없을 때의 쿼리.*/
+        /*아무 검색옵션 값이 없을 때의 쿼리는 이렇게 바껴야 한다! (동적쿼리 해결법 => QueryDsl사용한 아래의 findAll함수 참고).*/
 //        return em.createQuery("select o from Order o join o.member m", Order.class)
 //                .setMaxResults(1000)  // 최대 1000건을 가져온다.
 //                .getResultList();
@@ -47,9 +60,9 @@ public class OrderRepository {
     }
 
     //동적쿼리를 생성하는 방법은  (P.61참조)
-    // 1. jpql 쿼리를 문자로 생성하는 방법, 2. JPA Criteria를 사용하는 방법
+    // 1. jpql 쿼리를 문자로 생성하는 방법
+    // 2. JPA Criteria를 사용하는 방법
     // 3.Querydsl을 사용하는 방법이 있으나 방법 1,2는 너무 복잡해서 3번을 통해 해결한다.
-
     /*JPQL 쿼리를 문자로 생성하는 방법*/
     public List<Order> findAllByString(OrderSearch orderSearch) {
 
@@ -121,6 +134,34 @@ public class OrderRepository {
                         " join fetch o.delivery d", Order.class
         ).getResultList();
     }
+
+
+    public List<Order> findAll(OrderSearch orderSearch) {
+
+        return query
+                .select(order)  //QOrder.order static import
+                .from(order)
+                .join(order.member, member)
+//                .where(order.status.eq(orderSearch.getOrderStatus()), member.name.like(orderSearch.getMemberName()))  //정적 쿼리라면 이렇게 하면 된다.
+                .where(statusEq(orderSearch.getOrderStatus()),nameLike(orderSearch.getMemberName()))  //동적쿼리 사용 위해 메소드 추출하여 이렇게 사용.
+                .limit(1000)
+                .fetch();
+    }
+
+    private BooleanExpression nameLike(String memberName) {
+        if (!StringUtils.hasText(memberName)) {
+            return null;
+        }
+        return member.name.like(memberName);
+    }
+
+    private BooleanExpression statusEq(OrderStatus statusCond) {
+        if (statusCond == null) {
+            return null;  //null 반환시 where절에서 쓰지않고 그냥 버림
+        }
+        return order.status.eq(statusCond);
+    }
+
 
     /*
      * JPA의 distinct는 SQL에 distinct를 추가하고, 더해서 같은 엔티티가
